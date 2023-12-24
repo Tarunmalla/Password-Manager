@@ -2,20 +2,23 @@ import sys
 import time
 import hashlib
 import pyfiglet
+import os
 
 from cryptography.fernet import Fernet
 
 def encrypt_pwd(passwd):
     key=Fernet.generate_key()
     fernet = Fernet(key)
-    with open ('keys.txt','a+') as f:
-        f.write(key.decode())
+    with open('passman.txt','a+') as f:
+        f.write(key.decode()+"\n")
+    # with open ('keys.txt','a+') as f:
+    #     f.write(key.decode())
     encrypt=fernet.encrypt(passwd.encode())
     return encrypt.decode() #,fernet.decrypt(encrypt).decode()
 
-def password_interface():
+def password_interface(user):
     print(pyfiglet.figlet_format("SavePass"))
-    print("SavePass is open-source project to generate and store passwords ")
+    print(f"Welcome {user},SavePass is open-source project to generate and store passwords ")
     while True:
         print("1.Store a Password")
         print("2.Extract a password")
@@ -28,13 +31,20 @@ def password_interface():
             uname=input("Username:")
             passwd=input("Password:")
             encrypt=encrypt_pwd(passwd)
-            with open('websites.txt','a+') as f1:
-                f1.write(url+"\n")
-            with open('unames.txt','a+') as f2:
-                f2.write(uname+"\n")
-            with open('passwd.txt','a+') as f3:
-                f3.write(encrypt+"\n")
+            with open ("passman.txt",'a+') as f:
+                f.write(user+"\n")
+                f.write(url+"\n")
+                f.write(uname+"\n")
+                f.write(encrypt+"\n")
+            #for seperate files for each one
+            # with open('websites.txt','a+') as f1:
+            #     f1.write(url+"\n")
+            # with open('unames.txt','a+') as f2:
+            #     f2.write(uname+"\n")
+            # with open('passwd.txt','a+') as f3:
+            #     f3.write(encrypt+"\n")
                 # f3.write(decrypt)
+            
             print("Password has been successfully added")
             print()
             print("-------------------------------------------------------")
@@ -43,26 +53,40 @@ def password_interface():
             print("----------------------------------------------------------")
             print()
             url=input("enter website url:")
-            line_no=uname_exists('websites.txt',url)
+            print()
+            line_no=uname_exists('passman.txt',url)
             if line_no is None :
                 print("No such entry exists !! Try again")
             else :
-                file1=open('unames.txt')
-                file2=open('passwd.txt')
-                file3=open('keys.txt')
-                content1=file1.readlines()
-                print(f"username:{content1[line_no-1]}")
-                content2=file2.readlines()
-                content3=file3.readlines()
-                decrypt=Fernet(content3[line_no-1]).decrypt(content2[line_no-1]).decode()
-                print(f"Password:{decrypt}")
+                # file1=open('unames.txt')
+                # file2=open('passwd.txt')
+                # file3=open('keys.txt')
+                # content1=file1.readlines()
+                # print(f"username:{content1[line_no-1]}")
+                # content2=file2.readlines()
+                # content3=file3.readlines()
+                # decrypt=Fernet(content3[line_no-1]).decrypt(content2[line_no-1]).decode()
+                # print(f"Password:{decrypt}")
+                file=open('passman.txt')
+                content=file.readlines()
+                if user == content[line_no-2]:
+                    print(f"Username:{content[line_no]}")
+                    decrypt=Fernet(content[line_no-3]).decrypt(content[line_no+1]).decode()
+                    print(f"Password:{decrypt}")
+                else:
+                    print("No website found!! Try again")
                 print()
-                print("--------------------------------------------------------------------")
+                print("--------------------------------------------------------------------")    
         if choice == 3 :
             exit_program()
-
+count=3
+count1=3
 def login_account():
+    print("--------------------------------------------------------------")
     uname=input("Username:")
+    if not os.path.exists('accounts.txt') :
+        print("Please Signup First!!")
+        exit_program()
     line_no = uname_exists('accounts.txt',uname)
     if  line_no is not None :
         passwd=input("Password:")
@@ -73,10 +97,30 @@ def login_account():
             print(f"Login Successful at {time.strftime('%X')}")
             print("entering into the application....")
             time.sleep(1)
-            password_interface()
+            password_interface(uname)
         else :
-            print("Incorrect Password!!!")
+            global count
+            count=count-1
+            print(f"You have {count} chances remaining....")
+            if count == 0:
+                exit_program()
+            login_account()
     else :
+        global count1
+        count1=count1-1
+        if count1==0 :
+            print("No user Found.Please Signup!!")
+            print("------------------------------------------------------------------------")
+            while(1):
+                choice=input("Press 1 to Signup or 3 to exit Program:")
+                if choice == 1:
+                    signup_account()
+                    break
+                elif choice == 3:
+                    exit_program()
+                else:
+                    print("Please enter a proper choice to continue!!")
+                    print("------------------------------------------------------------------------")
         print("username doesn't exists!!")
         login_account()
 
