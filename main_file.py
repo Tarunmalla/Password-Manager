@@ -3,7 +3,7 @@ import time
 import hashlib
 import pyfiglet
 import os
-
+from termcolor import colored
 from cryptography.fernet import Fernet
 
 def encrypt_pwd(passwd):
@@ -17,7 +17,7 @@ def encrypt_pwd(passwd):
     return encrypt.decode() #,fernet.decrypt(encrypt).decode()
 
 def password_interface(user):
-    print(pyfiglet.figlet_format("SavePass"))
+    print(colored(pyfiglet.figlet_format("SavePass"),'red'))
     print(f"Welcome {user},SavePass is open-source project to generate and store passwords ")
     while True:
         print("1.Store a Password")
