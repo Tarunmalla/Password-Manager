@@ -1,6 +1,6 @@
 # Savepass
 
-This is a simple multiuser password manager in Python allows you to store passwords using file handling and sqlite3 where main_db.py uses database and main_file uses file handling.
+This is a simple multiuser password manager in Python allows you to store,generate and retrieve passwords using file handling and SQlite3 where main_db.py uses database and main_file uses file handling.
 
 Here,Password is encrypted before storing in the file or the database.
 

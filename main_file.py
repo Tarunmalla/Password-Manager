@@ -1,10 +1,11 @@
-import sys
-import time
+import sys,time,os
 import hashlib
 import pyfiglet
-import os
 from termcolor import colored
 from cryptography.fernet import Fernet
+from string import punctuation,ascii_letters,digits
+import pyperclip
+import random
 
 def encrypt_pwd(passwd):
     key=Fernet.generate_key()
@@ -22,10 +23,11 @@ def password_interface(user):
     while True:
         print("1.Store a Password")
         print("2.Extract a password")
-        print("3.Exit the Application")
-        choice=int(input("enter your choice:"))
-        if choice == 1 :
-            print("-------------------------------------------------------")
+        print("3.Delete an Account")
+        print("4.Exit the Application")
+        choice=input("enter your choice:")
+        if choice == '1' :
+            print("--------------------------------------------------------------------")
             print()
             url=input("Website URL:")
             uname=input("Username:")
@@ -35,22 +37,13 @@ def password_interface(user):
                 f.write(user+"\n")
                 f.write(url+"\n")
                 f.write(uname+"\n")
-                f.write(encrypt+"\n")
-            #for seperate files for each one
-            # with open('websites.txt','a+') as f1:
-            #     f1.write(url+"\n")
-            # with open('unames.txt','a+') as f2:
-            #     f2.write(uname+"\n")
-            # with open('passwd.txt','a+') as f3:
-            #     f3.write(encrypt+"\n")
-                # f3.write(decrypt)
-            
+                f.write(encrypt+"\n")       
             print("Password has been successfully added")
             print()
-            print("-------------------------------------------------------")
+            print("--------------------------------------------------------------------")
         
-        if choice == 2 :
-            print("----------------------------------------------------------")
+        elif choice == '2' :
+            print("--------------------------------------------------------------------")
             print()
             url=input("enter website url:")
             print()
@@ -58,15 +51,6 @@ def password_interface(user):
             if line_no is None :
                 print("No such entry exists !! Try again")
             else :
-                # file1=open('unames.txt')
-                # file2=open('passwd.txt')
-                # file3=open('keys.txt')
-                # content1=file1.readlines()
-                # print(f"username:{content1[line_no-1]}")
-                # content2=file2.readlines()
-                # content3=file3.readlines()
-                # decrypt=Fernet(content3[line_no-1]).decrypt(content2[line_no-1]).decode()
-                # print(f"Password:{decrypt}")
                 file=open('passman.txt')
                 content=file.readlines()
                 if user == content[line_no-2]:
@@ -76,9 +60,14 @@ def password_interface(user):
                 else:
                     print("No website found!! Try again")
                 print()
-                print("--------------------------------------------------------------------")    
-        if choice == 3 :
+                print("--------------------------------------------------------------------")   
+
+        elif choice == '3':
+           pass
+
+        elif choice == '4' :
             exit_program()
+        
 count=3
 count1=3
 def login_account():
@@ -164,26 +153,35 @@ def signup_account():
         print("Please try again")
         main()
                
-
+def generate_pwd():
+    x=int(input("No. of characters in password:"))
+    symbols = punctuation + ascii_letters + digits
+    secure_rand = random.SystemRandom()
+    password = "".join(secure_rand.choice(symbols) for i in range(x))
+    pyperclip.copy(password)
+    print(f"generated password;{password}")
+    print("password copied to clipboard...")
 
 def exit_program():
     print(f"exiting the program at {time.strftime('%X')}")
     sys.exit(0)
 
 def main():
-    
     while(1):
-        print("1.Sign Up")
-        print("2.Login")
-        print("3.exit")
-        choice = (input("select a choice:"))
+        print(colored('1.Sign Up','red'))
+        print(colored('2.Login','red'))
+        print(colored('3.Generate Password','red'))
+        print(colored('4.exit','red'))
+        choice = (input(colored("select a choice:",'blue')))
         if choice == '1' :
             signup_account()
-            break
         elif choice == '2' :
             login_account()
             break
         elif choice == '3' :
+            generate_pwd()
+            break
+        elif choice == '4' :
             exit_program()
             break
         else:
@@ -193,4 +191,6 @@ def main():
             print()
             print("---------------------------------------------------------------------")
 
-main()
+
+if __name__ == "__main__":
+    main()

@@ -1,13 +1,12 @@
-import sys
-import time
-import hashlib
-import pyfiglet
-import os
+import sys,time,random
+import hashlib,pyfiglet,os
 import sqlite3
 from termcolor import colored
 from cryptography.fernet import Fernet
+from string import punctuation,ascii_letters,digits
+import pyperclip
 
-count= count1= 3
+count= count1=count2= 3
 def encrypt_pwd(user,passwd):
     key=Fernet.generate_key()
     fernet = Fernet(key)
@@ -24,6 +23,8 @@ def  store_pwd(user):
     c.execute(f"INSERT INTO {user} (website,uname,password,key) VALUES (?,?,?,?)", (url,uname,encrypt,key,))
     conn.commit()
     conn.close()
+    time.sleep(1)
+    print("Hurray!!Password has been successfully stored...")
     print("---------------------------------------------------------------------------")
 
 def retrieve_pwd(user):
@@ -43,6 +44,21 @@ def retrieve_pwd(user):
         print(f"password:{Fernet(key).decrypt(pwd).decode()}")
         print()
         print("-----------------------------------------------------------------")
+
+def delete_usr(user):
+    inp=input("You are going to lose your entire data?[Y/N]:")
+    if inp.upper() == 'Y':
+        conn=sqlite3.connect('accounts.db')
+        c=conn.cursor()
+        c.execute("DELETE FROM users where username =?",(user,))
+        c.execute(f"DROP TABLE IF EXISTS {user}")
+        conn.commit()
+        conn.close()
+        print(colored("Account has been successfully deleted",'white'))
+        exit_program()
+    else:
+        exit_program()
+
 def password_interface(user):
     print(colored(pyfiglet.figlet_format("SavePass"),'red'))
     print(f"Welcome {user},SavePass is open-source project to generate and store passwords using sqlite3")
@@ -50,6 +66,7 @@ def password_interface(user):
         
         print("1.Store a Password")
         print("2.Retrieve a Password")
+        print("3.Delete Account")
         print("3.To Exit the Application")
         choice=input("Enter your Choice:")
         if choice == '1':
@@ -57,6 +74,8 @@ def password_interface(user):
         elif choice == '2':
             retrieve_pwd(user)
         elif choice == '3':
+            delete_usr(user)
+        elif choice == '4':
             exit_program()
         else:
             print("Please choose a correct option to continue...")
@@ -72,6 +91,11 @@ def login_account():
     username=input("Username:")
     Passwd=input("Password:")
     if check_user(username) is None :
+        global count1
+        count2=count2-1
+        if count2==0:
+            print("No More chances left...")
+            exit_program()
         print("No Such User Found!!")
         print("Please Try again!!")
         print("---------------------------------------------------------------------")
@@ -84,11 +108,12 @@ def login_account():
         if c.fetchone()[0] == hashed_pwd:
             print("Login Successful")
             print("Entering into the Application....")
+            time.sleep(1)
             password_interface(username)
         else:
             global count1
             count1=count1-1
-            if count1<0:
+            if count1==0:
                 print("No More chances left...")
                 exit_program()
             else:
@@ -136,20 +161,31 @@ def exit_program():
     print(colored(f"exiting the program at {time.strftime('%X')}.....",'yellow'))
     sys.exit(0)
 
+def generate_pwd():
+    x=int(input("No. of characters in password:"))
+    symbols = punctuation + ascii_letters + digits
+    secure_rand = random.SystemRandom()
+    password = "".join(secure_rand.choice(symbols) for i in range(x))
+    pyperclip.copy(password)
+    print(f"generated password;{password}")
+    print("password copied to clipboard...")
+
 def main():
-    
     while(1):
         print(colored('1.Sign Up','red'))
         print(colored('2.Login','red'))
-        print(colored('3.exit','red'))
+        print(colored('3.Generate Password','red'))
+        print(colored('4.exit','red'))
         choice = (input(colored("select a choice:",'blue')))
         if choice == '1' :
             signup_account()
-            break
         elif choice == '2' :
             login_account()
             break
         elif choice == '3' :
+            generate_pwd()
+            break
+        elif choice == '4' :
             exit_program()
             break
         else:
@@ -159,4 +195,5 @@ def main():
             print()
             print("---------------------------------------------------------------------")
 
-main()
+if __name__ == "__main__":
+    main()
