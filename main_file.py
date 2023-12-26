@@ -17,18 +17,45 @@ def encrypt_pwd(passwd):
     encrypt=fernet.encrypt(passwd.encode())
     return encrypt.decode() #,fernet.decrypt(encrypt).decode()
 
+def exists_list(file_path,keyword):
+    lines=[]
+    line_number=1
+    with open(file_path,'r') as file:
+        for line in file:
+            line_number += 1
+            if keyword in line:
+                lines.append(line_number)
+    return lines
+
+
+
+def delete_lines(file_path, lines_to_delete):
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        with open(file_path, 'w') as file:
+            for index, line in enumerate(lines, start=1):
+                if index not in lines_to_delete:
+                    file.write(line)
+    except FileNotFoundError:
+        print(f"File not found at path: {file_path}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
 def password_interface(user):
     print(colored(pyfiglet.figlet_format("SavePass"),'red'))
-    print(f"Welcome {user},SavePass is open-source project to generate and store passwords ")
+    print(f"Welcome {user.upper()},SavePass is open-source project to generate and store passwords ")
+    print()
     while True:
         print("1.Store a Password")
         print("2.Extract a password")
         print("3.Delete an Account")
         print("4.Exit the Application")
+        print("--------------------------------------------------------------------")  
         choice=input("enter your choice:")
         if choice == '1' :
-            print("--------------------------------------------------------------------")
-            print()
             url=input("Website URL:")
             uname=input("Username:")
             passwd=input("Password:")
@@ -53,25 +80,48 @@ def password_interface(user):
             else :
                 file=open('passman.txt')
                 content=file.readlines()
-                if user == content[line_no-2]:
+                if user +"\n" == content[line_no-2]:
                     print(f"Username:{content[line_no]}")
                     decrypt=Fernet(content[line_no-3]).decrypt(content[line_no+1]).decode()
                     print(f"Password:{decrypt}")
+                    pyperclip.copy(decrypt)
+                    print(colored("PASSWORD COPIED TO CLIPBOARD...","green",attrs=['bold']))
                 else:
                     print("No website found!! Try again")
                 print()
                 print("--------------------------------------------------------------------")   
 
         elif choice == '3':
-           pass
-
+            inp=input("You are going to lose your entire data[Y/N]:")
+            if inp.upper() == 'Y':
+                linn=exists_list('accounts.txt',user)
+                y=[]
+                for i in linn:
+                   y.append(i-1)
+                   y.append(i)
+                delete_lines('accounts.txt',y)
+                comp=exists_list('passman.txt',user)
+                print(comp)
+                x=[]
+                for i in comp : 
+                   x.append(i-2)#removing key
+                   x.append(i-1)#removing user
+                   x.append(i)#removing url
+                   x.append(i+1)#removing uname
+                   x.append(i+2)#removing pwd
+                print(x)
+                delete_lines('passman.txt',x)
+                print("Your Account has been successfully deleted!!")
+                exit_program()
         elif choice == '4' :
             exit_program()
+        else:
+            print("Please Choose a proper option to continue...")
+            print("--------------------------------------------------------------------")  
         
 count=3
 count1=3
 def login_account():
-    print("--------------------------------------------------------------")
     uname=input("Username:")
     if not os.path.exists('accounts.txt') :
         print("Please Signup First!!")
@@ -80,9 +130,9 @@ def login_account():
     if  line_no is not None :
         passwd=input("Password:")
         hashedpwd=hash_pwd(passwd)
-        file=open('passwords.txt')
+        file=open('accounts.txt')
         content=file.readlines()
-        if content[line_no-1] == hashedpwd + "\n" :
+        if content[line_no] == hashedpwd + "\n" :
             print(f"Login Successful at {time.strftime('%X')}")
             print("entering into the application....")
             time.sleep(1)
@@ -115,6 +165,7 @@ def login_account():
 
 
 
+
 def uname_exists(file_path,keyword):
     line_number=0
 
@@ -144,10 +195,9 @@ def signup_account():
         hashed_pwd=hash_pwd(passwd)
         with open ('accounts.txt','a+') as f:
             f.write(username+"\n")
-        with open ('passwords.txt','a+') as ff:
-            ff.write(hashed_pwd+"\n")
+            f.write(hashed_pwd+"\n")
             print("Account has been successfully created !!")
-            exit_program()
+            print("--------------------------------------------------------------------")  
     else :
         print("username already exists!!")
         print("Please try again")
@@ -160,10 +210,10 @@ def generate_pwd():
     password = "".join(secure_rand.choice(symbols) for i in range(x))
     pyperclip.copy(password)
     print(f"generated password;{password}")
-    print("password copied to clipboard...")
+    print(colored("PASSWORD COPIED TO CLIPBOARD...","green",attrs=['bold']))
 
 def exit_program():
-    print(f"exiting the program at {time.strftime('%X')}")
+    print(colored(f"exiting the program at {time.strftime('%X')}.....",'yellow'))
     sys.exit(0)
 
 def main():
@@ -172,6 +222,7 @@ def main():
         print(colored('2.Login','red'))
         print(colored('3.Generate Password','red'))
         print(colored('4.exit','red'))
+        print("--------------------------------------------------------------------")  
         choice = (input(colored("select a choice:",'blue')))
         if choice == '1' :
             signup_account()

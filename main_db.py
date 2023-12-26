@@ -42,6 +42,8 @@ def retrieve_pwd(user):
         pwd=result[2]
         key=result[3]
         print(f"password:{Fernet(key).decrypt(pwd).decode()}")
+        pyperclip.copy(Fernet(key).decrypt(pwd).decode())
+        print(colored("PASSWORD COPIED TO CLIPBOARD...","green",attrs=['bold']))
         print()
         print("-----------------------------------------------------------------")
 
@@ -167,8 +169,8 @@ def generate_pwd():
     secure_rand = random.SystemRandom()
     password = "".join(secure_rand.choice(symbols) for i in range(x))
     pyperclip.copy(password)
-    print(f"generated password;{password}")
-    print("password copied to clipboard...")
+    print(f"generated password: {password}")
+    print(colored("PASSWORD COPIED TO CLIPBOARD...","green",attrs=['bold']))
 
 def main():
     while(1):
