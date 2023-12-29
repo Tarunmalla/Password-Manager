@@ -5,9 +5,14 @@ from termcolor import colored
 from cryptography.fernet import Fernet
 from string import punctuation,ascii_letters,digits
 import pyperclip
+import signal
 
+def signal_handler(sig,frame):
+    exit_program()
+
+signal.signal(signal.SIGINT,signal_handler)
 count= count1=count2= 3
-def encrypt_pwd(user,passwd):
+def encrypt_pwd(passwd):
     key=Fernet.generate_key()
     fernet = Fernet(key)
     encrypt=fernet.encrypt(passwd.encode())
@@ -17,7 +22,7 @@ def  store_pwd(user):
     url=input("Enter website url:")
     uname=input("Enter username:")
     pwd=input("Enter Password:")
-    encrypt,key=encrypt_pwd(user,pwd)
+    encrypt,key=encrypt_pwd(pwd)
     conn=sqlite3.connect('accounts.db')
     c=conn.cursor()
     c.execute(f"INSERT INTO {user} (website,uname,password,key) VALUES (?,?,?,?)", (url,uname,encrypt,key,))
@@ -61,6 +66,38 @@ def delete_usr(user):
     else:
         exit_program()
 
+def delete_entry(user):
+    inp=input("Enter your website url:")
+    conn=sqlite3.connect('accounts.db')
+    c=conn.cursor()
+    c.execute(f"DELETE FROM {user} where website =?",(inp,))
+    conn.commit()
+    conn.close()
+    print(colored("Entry has been successfully deleted...",'white'))
+    print()
+
+def modify_uname(user):
+    print("Modifying a username removes the previous username data and you need to enter the password again!!")
+    ch=input("Do you want to continue...[Y/N]:")
+    if ch.upper() == 'Y':
+        delete_entry(user)
+        print()
+        print("---------------------Enter Your New Account Details--------------------------")
+        store_pwd(user)
+    
+def modify_pwd(user):
+    url=input("Enter website :")
+    uname=input("Enter username:")
+    pwd=input("Enter the Modified password:")
+    pwd1,key1=encrypt_pwd(pwd)
+    conn=sqlite3.connect('accounts.db')
+    c=conn.cursor()
+    c.execute(f"UPDATE {user} SET password=?,key=? WHERE website=? and uname =?",(pwd1,key1,url,uname,))
+    conn.commit()
+    conn.close()
+    print(colored("Password has been successfully modified...",'white'))
+    print()
+
 def password_interface(user):
     print(colored(pyfiglet.figlet_format("SavePass"),'red'))
     print(f"Welcome {user},SavePass is open-source project to generate and store passwords using sqlite3")
@@ -68,32 +105,61 @@ def password_interface(user):
         
         print("1.Store a Password")
         print("2.Retrieve a Password")
-        print("3.Delete Account")
-        print("3.To Exit the Application")
+        #print("3.Delete Account")
+        print("3.Delete an Entry")
+        print("4.Modify Password")
+        print("5.Modify username")
+        print("6.To Exit the Application")
         choice=input("Enter your Choice:")
         if choice == '1':
             store_pwd(user)
         elif choice == '2':
             retrieve_pwd(user)
         elif choice == '3':
-            delete_usr(user)
+            delete_entry(user)
         elif choice == '4':
+            modify_pwd(user)
+        elif choice == '5':
+            modify_uname(user)
+        elif choice == '6':
             exit_program()
         else:
             print("Please choose a correct option to continue...")
 
 def check_user(uname):
+    
     conn = sqlite3.connect('accounts.db')
     c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS users
+                (username TEXT, password TEXT)''')
     c.execute("SELECT username FROM users where username= ?",(uname,))
     for row in c:
         return row
+
+def change_pwd(user):
+    conn=sqlite3.connect('accounts.db')
+    c=conn.cursor()
+    present=input("Enter your current password:")
+    c.execute("SELECT password FROM users where username= ?",(user,))
+    if hash_pwd(present) == c.fetchone()[0]:
+        while True:
+            new=input("Enter your New password:")
+            new1=input("Re-enter your New password:")   
+            if new == new1:
+                c.execute(f"UPDATE users SET password = ? WHERE username=?",(hash_pwd(new),user,))
+                print("Password has been successfully modified....")
+                conn.commit()
+                conn.close()
+                exit_program()
+            else:
+                print("passwords doesn't match!!")
+                print("Please Try again...")
 
 def login_account():
     username=input("Username:")
     Passwd=input("Password:")
     if check_user(username) is None :
-        global count1
+        global count2
         count2=count2-1
         if count2==0:
             print("No More chances left...")
@@ -108,10 +174,37 @@ def login_account():
         c = conn.cursor()
         c.execute("SELECT password FROM users where username= ?",(username,))
         if c.fetchone()[0] == hashed_pwd:
-            print("Login Successful")
-            print("Entering into the Application....")
-            time.sleep(1)
-            password_interface(username)
+            print(colored(f"Login Successful at {time.strftime('%X')}.....",'yellow'))
+            print()
+            while True:
+                print("--------------------------------------------------------------------------")
+                print("1.Main Menu")
+                print("2.Enter into application")
+                print("3.Exit application")
+                ch=input("Enter your choice:")
+                if ch == '1':
+                    while True:
+                        print("--------------------------------------------------------------------")
+                        print("1.Change Password")
+                        print("2.Delete Account")
+                        print("3.Exit program")
+                        ch1=input("Enter your choice:")
+                        if ch1 == '1':
+                            change_pwd(username)
+                        elif ch1 == '2':
+                            delete_usr(username)
+                        elif ch1 == '3':
+                            exit_program()
+                        else :
+                            print("Enter a proper choice to continue...")
+                elif ch == '2':
+                    print("Entering into the Application....")
+                    time.sleep(1)
+                    password_interface(username)
+                elif ch == '3':
+                    exit_program()
+                else :
+                    print("Enter a proper choice to continue....")
         else:
             global count1
             count1=count1-1
